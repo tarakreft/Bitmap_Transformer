@@ -1,26 +1,43 @@
 var fs = require('fs');
 
-
-
-fs.readFile('./werk.bmp', function (err, data) {
-	if (err) return err;
+function BitmapTransformer() {
+	var offSet;
+	var bitHeader;
+	var pixelArray;
+	var pixelTransform;
+	var finalBuffer;
+	var data;
 	
-	var offSet = data.readUInt16LE(10);
-	var bitHeader = data.slice(0, offSet);
-	var pixelArray = data.slice(offSet, data.length);
+	this.read = function (fileName) {
+		console.log("reading file...");
+		this.originalFileName = fileName;
+		this.data = fs.readFileSync(this.originalFileName);
+		this.offSet = this.data.readUInt16LE(10);
+		this.bitHeader = this.data.slice(0, this.offSet);
+		this.pixelArray = this.data.slice(this.offSet, this.data.length);
+	};
 
-  	var inverted = [];
+	this.invert = function () {
+		console.log("inverting pixels...")
+		var inverted = [];
+		for (i = 0; i < this.pixelArray.length; i++){
+			inverted.push(this.pixelArray[i] = 255 - this.pixelArray[i]);
+		}
+		this.pixelTransform = new Buffer(inverted);
+	};
 
-  	for ( i = 0; i < pixelArray.length; i++ ) {
-    	inverted.push(pixelArray[i] = 255 - pixelArray[i]);
-  	} 
+	this.reattachHeader = function () {
+		console.log("re-attaching header...");
+		this.finalBuffer = Buffer.concat([this.bitHeader, this.pixelTransform]);
+	};
 
-	var pixelInvert = new Buffer(inverted);
+	this.save = function (outputName) {
+		this.outputName = outputName;
+		fs.writeFile(outputName, this.finalBuffer, function (err){
+			if (err) throw err;
+			console.log("Your file has been transformed :) ");
+		});
+	};
+}
 
-	var fitnessBuff = Buffer.concat([bitHeader, pixelInvert]);
-
-	fs.writeFile('./out.bmp', fitnessBuff, function (err){
-		if (err) return err;
-		console.log('your file has been transformed');
-	 });	
- });
+module.exports.BitmapTransformer = BitmapTransformer;

@@ -1,100 +1,41 @@
 var expect = require('chai').expect;
-var Bitmap_Transformer = require('./Bitmap_Transformer.js');
+var BitmapTransformer = require('./Bitmap_Transformer.js').BitmapTransformer;
 var fs = require('fs');
 
+var FitnessEmoji = new BitmapTransformer();
 
-describe('fs.readfile', function() {
-	it('reads a file, throws err if unavailable', function(){
-		fs.readFile('./werk.bmp', function (err, data) {
-		if (err) return err;
-			expect('./werk.bmp').to.exist;
-		});	
-	});	
-});		
 
-describe ('offSet', function(){
-	it('identifies where the pixel array begins', function (){
-		fs.readFile('./werk.bmp', function (err, data) {	
-			var offSet = data.readUInt16LE(10);
-				expect(offSet).to.eql(54);
-		});	
-	});	
-});	
+describe('BitmapTransformer', function(){
 
-describe ('bitHeader', function(){
-	it('saves the Header info in a buffer', function (){
-		fs.readFile('./werk.bmp', function (err, data) {	
-			var bitHeader = data.slice(0, offSet);
-				expect(bitHeader).to.have.length(54);
-		});	
-	});	
-});	
-describe ('pixelArray', function(){
-	it('has only the pixel info for bitmap', function (){
-		fs.readFile('./werk.bmp', function (err, data) {	
-			var pixelArray = data.slice(offSet, data.length);
-				expect(pixelArray).to.exist;
-		});	
-	});	
+	it('has a read method', function (done){
+		FitnessEmoji.read('./werk.bmp');
+			expect(FitnessEmoji.data).to.exist;
+			expect(FitnessEmoji.offSet).to.eql(54);
+			expect(FitnessEmoji.bitHeader.length).to.eql(54);
+			expect(FitnessEmoji.data.length).to.eql
+				(FitnessEmoji.bitHeader.length + FitnessEmoji.pixelArray.length);
+			done();
+	});
+
+	it('has an invert method', function (done){
+		FitnessEmoji.invert();
+			expect(FitnessEmoji.pixelTransform.length).to.eql
+				(FitnessEmoji.pixelArray.length);
+			done();
+	});
+
+	it('has a method to re-attach the header', function (done){
+		FitnessEmoji.reattachHeader();
+			expect(FitnessEmoji.finalBuffer.length).to.eql
+				(FitnessEmoji.bitHeader.length + FitnessEmoji.pixelTransform.length);
+			done();
+	});
+
+	it('has a save method', function (done){
+		FitnessEmoji.save('./out.bmp');
+			expect(FitnessEmoji.outputName).to.exist;
+			expect(FitnessEmoji.outputName).to.eql('./out.bmp')
+			done();
+	});
+
 });
-
-describe ('inverted', function(){
-	it('holds the inverted pixels', function (){
-		fs.readFile('./werk.bmp', function (err, data) {	
-			var inverted = [];
-				expect(inverted).to.be.instanceof(Array);
-		});	
-	});	
-});
-
-describe ('for loop', function(){
-	it('loops through the pixel array and inverts pixels', function (){
-		fs.readFile('./werk.bmp', function (err, data) {	
-			for ( i = 0; i < pixelArray.length; i++ ) {
-    			inverted.push(pixelArray[i] = 255 - pixelArray[i]);
-  				} 
-				expect(pixelArray[i]).to.have.lengthOf(pixelArray.length);
-		});	
-	});	
-});
-
-describe ('pixel invert', function(){
-	it('makes new buffer from inverted', function (){
-		fs.readFile('./werk.bmp', function (err, data) {	
-			var pixelInvert = new Buffer(inverted);
-				expect(pixelInvert).to.be.ok;
-		});	
-	});	
-});
-
-describe ('fitnessBuff', function(){
-	it('concatenates two buffers', function (){
-		fs.readFile('./werk.bmp', function (err, data) {	
-    		var fitnessBuff = Buffer.concat([bitHeader, pixelInvert]); 
-				expect(fitnessBuff).to.be.eql.to([bitHeader, pixelInvert]);
-		});	
-	});	
-});
-
-describe ('fs.writeFile', function(){
-	it('writes new transformed file', function (){
-		fs.readFile('./werk.bmp', function (err, data) {	
-			fs.writeFile('./out.bmp', fitnessBuff, function (err){
-				if (err) return err;
-				console.log('your file has been transformed');
-	 			});	
- 			});
-				expect('./out.bmp').to.exist;
-	});	
-});	
-
-  
-
-
-
-	
-
-
-
-
-	
